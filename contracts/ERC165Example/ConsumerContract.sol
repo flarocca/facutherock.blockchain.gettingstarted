@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: UNLICENSED
+
 pragma solidity ^0.8.7;
 
 import "./Interfaces/IGreeting.sol";
 import "./Interfaces/IHello.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 contract ConsumerContract {
     using ERC165Checker for address;
@@ -10,7 +12,7 @@ contract ConsumerContract {
     IGreeting private greetingContract;
     IHello private helloContract;
     
-    constructor(address _greetingAddress, address _helloAddress) public {
+    constructor(address _greetingAddress, address _helloAddress) {
         bool implementsERC165 = _greetingAddress.supportsInterface(type(IGreeting).interfaceId);
         bool doesNotImplementERC165 = _helloAddress.supportsInterface(type(IHello).interfaceId);
         
