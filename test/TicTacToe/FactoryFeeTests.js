@@ -1,43 +1,49 @@
-const expect = require("chai").expect;
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
-const TicTacToe = artifacts.require("TicTacToe");
-const Factory = artifacts.require("Factory");
-
-contract("FactoryFee - JS", async accounts => {
-    const [owner, alice] = accounts;
-    const from = {
-        from: owner
-    };
+describe("FactoryFee", () => {
+    let [owner, alice] = ["", ""];
+    let TicTacToe;
+    let ticTacToe;
+    let Factory;
     let contract;
 
     beforeEach(async () => {
-        contract = await Factory.new(1, 1, TicTacToe.address, from);
+        [owner, alice] = await ethers.getSigners();
+
+        const BoardUtils = await hre.ethers.getContractFactory("BoardUtils");
+        const boardUtils = await BoardUtils.deploy();
+        await boardUtils.deployed();
+
+        TicTacToe = await ethers.getContractFactory("TicTacToe", {
+          libraries: {
+            BoardUtils: boardUtils.address
+          }
+        });
+        ticTacToe = await TicTacToe.deploy();
+
+        Factory = await ethers.getContractFactory("Factory");
+        contract = await Factory.deploy(1, 1, ticTacToe.address);
     });
 
     it("Initial fee must be greater than 0", async () => {
         // Arrange
         const initialFeeLessThanOne = 0;
 
-        try {
-            // Act
-            await Factory.new(initialFeeLessThanOne, 1, TicTacToe.address, from);
-        } catch(error) {
-            // Assert
-            expect(error.reason).to.equal("Initial Fee must be greater than zero.");
-        }
+        // Act & Assert
+        await expect(
+          Factory.deploy(initialFeeLessThanOne, 1, ticTacToe.address)
+        ).to.be.revertedWith("Initial Fee must be greater than zero.");
     });
 
     it("Initial bet must be greater than 0", async () => {
         // Arrange
         const initialBetLessThanOne = 0;
 
-        try {
-            // Act
-            await Factory.new(1, initialBetLessThanOne, TicTacToe.address, from);
-        } catch(error) {
-            // Assert
-            expect(error.reason).to.equal("Initial Bet must be greater than zero.");
-        }
+        // Act & Assert
+        await expect(
+          Factory.deploy(1, initialBetLessThanOne, ticTacToe.address)
+        ).to.be.revertedWith("Initial Bet must be greater than zero.");
     });
 
     it("Can be instantiated", async () => {
@@ -46,16 +52,16 @@ contract("FactoryFee - JS", async accounts => {
         const initialBet = 2;
 
         // Act
-        const contract = await Factory.new(initialFee, initialBet, TicTacToe.address, from);
+        const contract = await Factory.deploy(initialFee, initialBet, ticTacToe.address);
 
         // Assert
-        expect(await contract.owner()).to.equal(accounts[0]);
+        expect(await contract.owner()).to.equal(owner.address);
     });
 
     it("Can get fee", async () => {
         // Arrange
         const initialFee = 5;
-        const contract = await Factory.new(initialFee, 1, TicTacToe.address, from);
+        const contract = await Factory.deploy(initialFee, 1, ticTacToe.address);
 
         // Act
         const fee = await contract.fee();
@@ -67,7 +73,7 @@ contract("FactoryFee - JS", async accounts => {
     it("Can get bet", async () => {
         // Arrange
         const initialBet = 5;
-        const contract = await Factory.new(1, initialBet, TicTacToe.address, from);
+        const contract = await Factory.deploy(1, initialBet, ticTacToe.address);
 
         // Act
         const bet = await contract.bet();
@@ -78,28 +84,22 @@ contract("FactoryFee - JS", async accounts => {
 
     it("Only owner can update fee", async () => {
         // Arrange
-        const notOwnerAddress = accounts[1];
+        const notOwnerAddress = alice;
 
-        try {
-            // Act
-            await contract.updateFee(2, {from: notOwnerAddress});
-        } catch(error) {
-            // Assert
-            expect(error.reason).to.equal("Ownable: caller is not the owner");
-        }
+        // Act & Assert
+        await expect(
+          contract.connect(notOwnerAddress).updateFee(2)
+        ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("Only owner can update bet", async () => {
         // Arrange
-        const notOwnerAddress = accounts[1];
+        const notOwnerAddress = alice;
 
-        try {
-            // Act
-            await contract.updateBet(2, {from: notOwnerAddress});
-        } catch(error) {
-            // Assert
-            expect(error.reason).to.equal("Ownable: caller is not the owner");
-        }
+        // Act & Assert
+        await expect(
+          contract.connect(notOwnerAddress).updateBet(2)
+        ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("Owner can update fee", async () => {
@@ -107,7 +107,7 @@ contract("FactoryFee - JS", async accounts => {
         const newFee = 5;
 
         // Act
-        await contract.updateFee(newFee, from);
+        await contract.updateFee(newFee);
 
         // Assert
         const currentFee = await contract.fee();
@@ -119,7 +119,7 @@ contract("FactoryFee - JS", async accounts => {
         const newBet = 5;
 
         // Act
-        await contract.updateBet(newBet, from);
+        await contract.updateBet(newBet);
 
         // Assert
         const currentBet = await contract.bet();
@@ -128,29 +128,23 @@ contract("FactoryFee - JS", async accounts => {
 
     it("Cannot update fee if status differs from AcceptingPlayerOne", async () => {
         // Arrange
-        const contract = await Factory.new(1, 1, TicTacToe.address, from);
-        await contract.create(1, {from: alice, value: 1});
+        const contract = await Factory.deploy(1, 1, ticTacToe.address);
+        await contract.connect(alice).create(1, {value: 1});
 
-        try {
-            // Act
-            await contract.updateFee(2, from);
-        } catch(error) {
-            // Assert
-            expect(error.reason).to.equal("This action cannot be executed at this state");
-        }
+        // Act & Assert
+        await expect(
+          contract.updateFee(2)
+        ).to.be.revertedWith("This action cannot be executed at this state");
     });
 
     it("Cannot update bet if status differs from AcceptingPlayerOne", async () => {
         // Arrange
-        const contract = await Factory.new(1, 1, TicTacToe.address, from);
-        await contract.create(1, {from: alice, value: 1});
+        const contract = await Factory.deploy(1, 1, ticTacToe.address);
+        await contract.connect(alice).create(1, {value: 1});
 
-        try {
-            // Act
-            await contract.updateBet(2, from);
-        } catch(error) {
-            // Assert
-            expect(error.reason).to.equal("This action cannot be executed at this state");
-        }
+        // Act & Assert
+        await expect(
+          contract.updateBet(2)
+        ).to.be.revertedWith("This action cannot be executed at this state");
     });
 });
