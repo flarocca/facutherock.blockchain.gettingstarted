@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 abstract contract FactoryFee is FactoryStateMachine, Ownable {
     
+    // TODO: Eternal storage
     uint public fee;
     uint public bet;
 

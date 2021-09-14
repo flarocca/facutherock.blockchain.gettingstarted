@@ -9,9 +9,7 @@ import "./Security.sol";
 
 contract Factory is Security, FactoryFee, IFactory {
 
-    address private constant EMPTY = address(0);
-    address private constant DRAW = address(1);
-
+    // TODO: Test events
     event GameCreated(address playerOne);
     event PlayerTwoJoined(address playerTwo);
     event GameStarted(address playerOne, address playerTwo);
@@ -19,6 +17,7 @@ contract Factory is Security, FactoryFee, IFactory {
     event RewardClaimed(address player, uint reward);
     event Withdrew(uint balance);
 
+    // TODO: Eternal storage
     address public playerOne;
     address public playerTwo;
     address public gameAddress;
@@ -26,7 +25,7 @@ contract Factory is Security, FactoryFee, IFactory {
 
     constructor(uint _initialFee, uint _initialBet, address _gameAddress) 
         FactoryFee(_initialFee, _initialBet) {
-            require(_gameAddress != EMPTY, "Game address is required");
+            require(_gameAddress != address(0), "Game address is required");
 
             gameAddress = _gameAddress;
         }
@@ -60,7 +59,7 @@ contract Factory is Security, FactoryFee, IFactory {
         onlyPlayers(playerOne, playerTwo)
         external {
         
-            require(playerOne != EMPTY && playerTwo != EMPTY, "The game needs two players to start");
+            require(playerOne != address(0) && playerTwo != address(0), "The game needs two players to start");
 
             state = FactoryState.OnGoing;
 
@@ -88,7 +87,7 @@ contract Factory is Security, FactoryFee, IFactory {
         external {
             uint reward = address(this).balance - (fee * 2);
 
-            if(winner != EMPTY) {
+            if(winner != address(0)) {
                 _payWinner(reward);
             } else {
                 _payPlayers(reward);
@@ -97,9 +96,9 @@ contract Factory is Security, FactoryFee, IFactory {
             _payOwner();
 
             state = FactoryState.AcceptingPlayerOne;
-            playerOne = EMPTY;
-            playerTwo = EMPTY;
-            winner = payable(EMPTY);
+            playerOne = address(0);
+            playerTwo = address(0);
+            winner = payable(address(0));
         }
 
     function _payWinner(uint reward) private {

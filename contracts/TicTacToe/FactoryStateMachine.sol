@@ -12,8 +12,10 @@ abstract contract FactoryStateMachine {
         Paid
     }
 
+    // TODO: Implement eternal storage
     FactoryState public state = FactoryState.AcceptingPlayerOne;
-    uint public initiationTime = block.timestamp; //internal
+    // TODO: Close the game automatically after some time
+    uint public initiationTime = block.timestamp;
 
     modifier onlyAtState(FactoryState _state) {
         require(state == _state, "This action cannot be executed at this state");

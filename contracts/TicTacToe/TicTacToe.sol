@@ -6,6 +6,7 @@ import "./TicTacToeBase.sol";
 
 contract TicTacToe is TicTacToeBase {
 
+    // TODO: Test events
     event MoveCompleted(address player, uint row, uint col);
 
     modifier validateSlot(uint _row, uint _col)  {

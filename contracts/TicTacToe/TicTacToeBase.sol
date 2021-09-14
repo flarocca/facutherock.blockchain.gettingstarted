@@ -10,18 +10,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 abstract contract TicTacToeBase is TicTacToeStateMachine, Ownable {
     using BoardUtils for BoardUtils.Board;
 
+    // TODO: Test events
     event FactorySet(address factoryAddress);
     event GameInitialized();
     event GameWon(address winner);
     event StateChanged(string newState);
 
-    address private constant EMPTY = address(0);
-    address private constant DRAW = address(1);
-
-    BoardUtils.Board internal board;
+    // TODO: Implement eternal storage
     address public factoryAddress;
     address public playerOne;
     address public playerTwo;
+    BoardUtils.Board internal board;
 
     modifier onlyPlayers(address _playerOne, address _playerTwo) {
         require(msg.sender == _playerOne || msg.sender == _playerTwo, "You are not playig this game.");
@@ -57,7 +56,7 @@ abstract contract TicTacToeBase is TicTacToeStateMachine, Ownable {
             playerOne = _playerOne;
             playerTwo = _playerTwo;
 
-            board.lastPlayerToMove = EMPTY;
+            board.lastPlayerToMove = address(0);
             board.table[0][0] = -1;
             board.table[0][1] = -1;
             board.table[0][2] = -1;
@@ -74,10 +73,11 @@ abstract contract TicTacToeBase is TicTacToeStateMachine, Ownable {
             emit StateChanged("Playing");
         }
 
+    // TODO: Check IFactory is called properly
     function checkWinner() internal {
         address winner = board.getWinner(playerOne, playerTwo);
 
-        if (winner == DRAW || winner == playerOne || winner == playerTwo) {
+        if (winner == address(1) || winner == playerOne || winner == playerTwo) {
             emit GameWon(winner);
             _notifyWinner(winner);
         }

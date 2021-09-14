@@ -9,6 +9,7 @@ abstract contract TicTacToeStateMachine {
         Playing
     }
 
+    // TODO: Implement eternal storage
     State public state = State.WaitingSetUp;
     uint public initiationTime = block.timestamp;
 
