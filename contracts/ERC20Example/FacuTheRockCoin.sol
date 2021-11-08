@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENCED
 pragma solidity ^0.8.7;
 
-import "./Interfaces/IERC20Minteable.sol";
-import "./Interfaces/IERC20Burneable.sol";
+import "./Interfaces/IMinteable.sol";
+import "./Interfaces/IBurneable.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract FacuTheRockCoin is IERC20Minteable, IERC20Burneable {
+contract FacuTheRockCoin is IERC20, IMinteable, IBurneable, ERC165 {
 
     string public constant name = "FacuTheRockCoin";
     string public constant symbol = "FTR";
@@ -21,6 +23,13 @@ contract FacuTheRockCoin is IERC20Minteable, IERC20Burneable {
 
         _totalSupply = _initialSupply * (10 ** decimals);
         _balances[msg.sender] = _totalSupply;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IMinteable).interfaceId || 
+               interfaceId == type(IBurneable).interfaceId || 
+               interfaceId == type(IERC20).interfaceId || 
+               super.supportsInterface(interfaceId);
     }
 
     function totalSupply() override external view returns (uint) {

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: UNLICENCED
 pragma solidity ^0.8.7;
 
-import "./IERC20.sol";
-
-interface IERC20Burneable is IERC20 {
+interface IBurneable {
     
     function burn(uint amount) external returns (bool);
 }
